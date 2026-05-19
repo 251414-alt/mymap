@@ -126,4 +126,157 @@
 <body>
   <div class="container">
     <div class="sidebar">
-      <div class="tab
+      <div class="tab-container">
+        <button class="tab-button active" onclick="switchTab('이비인후과', this)">이비인후과</button>
+        <button class="tab-button" onclick="switchTab('소아과', this)">소아과</button>
+        <button class="tab-button" onclick="switchTab('내과', this)">내과</button>
+      </div>
+      <div id="resultList" class="result-container">
+        <div style="padding:20px; text-align:center; color:#999;">위치 정보를 불러오는 중입니다...</div>
+      </div>
+    </div>
+
+    <div id="map"></div>
+  </div>
+
+  <script>
+    let map;
+    let placesService;
+    let markers = [];
+    let currentPosition;
+    let currentCategory = '이비인후과'; // 초기 선택 카테고리
+
+    // 카테고리별 마커 이미지 주소 (외부 무료 이미지 대치)
+    const markerImages = {
+      '이비인후과': 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png', // 파랑
+      '소아과': 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',     // 빨강
+      '내과': 'https://maps.google.com/mapfiles/ms/icons/yellow-dot.png'   // 노랑
+    };
+
+    // 카카오 지도 로드
+    kakao.maps.load(function () {
+      if (!navigator.geolocation) {
+        alert("위치 기능을 지원하지 않는 브라우저입니다.");
+        return;
+      }
+
+      // 현재 위치 가져오기
+      navigator.geolocation.getCurrentPosition(function (position) {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        currentPosition = new kakao.maps.LatLng(lat, lng);
+
+        // 지도 생성
+        map = new kakao.maps.Map(document.getElementById("map"), {
+          center: currentPosition,
+          level: 4
+        });
+
+        // 기획서 기능 2: 현재 내 위치를 지도에 예쁜 파란 점(커스텀 오버레이)으로 표시
+        const overlayContent = document.createElement('div');
+        overlayContent.className = 'my-location-marker';
+        
+        new kakao.maps.CustomOverlay({
+          position: currentPosition,
+          content: overlayContent,
+          map: map
+        });
+
+        // 장소 검색 객체 생성
+        placesService = new kakao.maps.services.Places();
+
+        // 초기 카테고리(이비인후과) 검색 실행
+        searchHospitals();
+      }, function() {
+        alert("위치 정보를 가져오지 못했습니다.");
+      });
+    });
+
+    // 탭 전환 함수
+    function switchTab(category, element) {
+      currentCategory = category;
+
+      // 활성화된 탭 스타일 변경
+      const buttons = document.querySelectorAll('.tab-button');
+      buttons.forEach(btn => btn.classList.remove('active'));
+      element.classList.add('active');
+
+      // 검색 수행
+      searchHospitals();
+    }
+
+    // 병원 검색 수행 함수 (현재 위치 기준 반경 2km)
+    function searchHospitals() {
+      if (!currentPosition || !placesService) return;
+
+      // 카카오맵의 병원 카테고리 코드(HP8)와 현재 탭 이름(키워드)을 조합하여 정확도 상승
+      placesService.keywordSearch(currentCategory, function (data, status) {
+        if (status === kakao.maps.services.Status.OK) {
+          displayPlaces(data);
+        } else {
+          const list = document.getElementById("resultList");
+          list.innerHTML = `<div style="padding:20px; text-align:center; color:#999;">주변에 ${currentCategory} 결과가 없습니다.</div>`;
+          clearMarkers();
+        }
+      }, {
+        location: currentPosition,
+        radius: 2000, // 반경 2km 이내 검색
+        category_group_code: 'HP8' // 병원 카테고리 그룹 코드 고정
+      });
+    }
+
+    // 결과 표시 및 마커 찍기
+    function displayPlaces(places) {
+      const list = document.getElementById("resultList");
+      list.innerHTML = "";
+      clearMarkers();
+
+      const bounds = new kakao.maps.LatLngBounds();
+
+      // 기획서 기능 1: 현재 탭 카테고리에 맞는 마커 이미지 지정
+      const imageSrc = markerImages[currentCategory];
+      const imageSize = new kakao.maps.Size(32, 32); // 마커 크기
+      const markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize);
+
+      places.forEach(place => {
+        const position = new kakao.maps.LatLng(place.y, place.x);
+
+        // 마커 생성 (색상 커스텀 적용)
+        const marker = new kakao.maps.Marker({
+          position: position,
+          image: markerImage,
+          map: map
+        });
+
+        markers.push(marker);
+        bounds.extend(position);
+
+        // 사이드바 리스트 아이템 동적 생성
+        const item = document.createElement("div");
+        item.className = "place-item";
+        item.innerHTML = `
+          <div class="place-name">${place.place_name}</div>
+          <div class="place-address">${place.address_name}</div>
+          ${place.phone ? `<div class="place-phone">${place.phone}</div>` : ''}
+        `;
+
+        // 리스트 클릭 시 해당 위치로 지도 중심 이동
+        item.onclick = () => {
+          map.setCenter(position);
+          map.setLevel(3); // 상세히 보이도록 레벨 확대
+        };
+        list.appendChild(item);
+      });
+
+      // 검색된 모든 병원이 화면에 보이도록 지도 범위 조정
+      map.setBounds(bounds);
+    }
+
+    // 기존 마커 초기화 함수
+    function clearMarkers() {
+      markers.forEach(m => m.setMap(null));
+      markers = [];
+    }
+  </script>
+</body>
+</html>

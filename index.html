@@ -2,19 +2,16 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>내 주변 병원 찾기 🧭</title>
-
-  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=26af8b5871fd92c2781d578f68c9982c&libraries=services&autoload=false"></script>
+  <title>내 주변 병원 찾기</title>
+  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=네_앱키&libraries=services&autoload=false"></script>
 
   <style>
-    /* 전체 테마 및 둥글둥글 스타일 패키지 */
     html, body {
       margin: 0;
       padding: 0;
       height: 100%;
-      font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
-      color: #4a4a4a;
-      background-color: #fcf9f2; /* 따뜻하고 부드러운 크림색 배경 */
+      font-family: 'Malgun Gothic', sans-serif;
+      background: #fffaf0;
     }
 
     .container {
@@ -22,236 +19,213 @@
       height: 100%;
     }
 
-    /* 포근한 느낌의 사이드바 디자인 */
+    /* 사이드바 */
     .sidebar {
       width: 380px;
-      height: 100%;
+      background: #ffffff;
       display: flex;
       flex-direction: column;
-      box-sizing: border-box;
-      background: #ffffff;
-      box-shadow: 4px 0 20px rgba(229, 215, 185, 0.3);
-      z-index: 10;
+      box-shadow: 3px 0 15px rgba(0,0,0,0.1);
     }
 
-    /* 2. [요청 기능] 동글동글 귀여운 검색창 */
+    /* 검색 영역 */
     .search-box {
-      padding: 20px 15px 10px 15px;
+      padding: 15px;
       display: flex;
       gap: 8px;
+      background: #fff3bf;
     }
 
-    .search-input {
+    .search-box input {
       flex: 1;
-      padding: 12px 18px;
-      border: 2px solid #ffeaa7;
-      border-radius: 25px;
-      font-size: 14px;
-      outline: none;
-      background-color: #fffdf9;
-      transition: all 0.3s;
-    }
-
-    .search-input:focus {
-      border-color: #ffb142;
-      background-color: #ffffff;
-    }
-
-    .search-button {
-      padding: 0 20px;
-      background: #ffb142;
-      color: white;
+      padding: 10px 12px;
+      border-radius: 20px;
       border: none;
-      border-radius: 25px;
-      font-weight: bold;
+      outline: none;
+      font-size: 14px;
+      background: #fff;
+    }
+
+    .search-box button {
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      background: #ffd43b;
       cursor: pointer;
-      box-shadow: 0 3px 6px rgba(255, 177, 66, 0.2);
+      font-size: 16px;
     }
 
-    .search-button:hover {
-      background: #ff9f1a;
-    }
-
-    /* 3. [요청 기능] 카카오 오리지널 대비 훨씬 둥글고 귀여워진 탭 */
+    /* 탭 */
     .tab-container {
       display: flex;
-      padding: 10px 15px;
-      gap: 8px;
+      background: #fff9db;
     }
 
     .tab-button {
       flex: 1;
-      padding: 11px 0;
+      padding: 12px 0;
       border: none;
-      background: #f1f2f6;
-      font-size: 14px;
+      background: none;
       font-weight: bold;
-      color: #7f8c8d;
       cursor: pointer;
-      border-radius: 20px;
-      text-align: center;
-      transition: all 0.2s;
-    }
-
-    .tab-button:hover {
-      background: #e4e7eb;
+      border-bottom: 3px solid transparent;
     }
 
     .tab-button.active {
-      color: #fff;
-      background: #ff7675; /* 따뜻한 감성의 핑크 레드 */
-      box-shadow: 0 4px 10px rgba(255, 118, 117, 0.35);
+      border-bottom: 3px solid #fcc419;
+      color: #f08c00;
     }
 
-    /* 아기자기한 병원 결과 리스트 */
+    /* 리스트 */
     .result-container {
       flex: 1;
       overflow-y: auto;
-      padding: 10px 15px;
+      padding: 10px;
     }
 
     .place-item {
+      background: #fff;
+      border-radius: 15px;
       padding: 15px;
-      background: #fffdf9;
-      border: 2px solid #fcf7ed;
+      margin-bottom: 10px;
       cursor: pointer;
-      border-radius: 18px;
-      margin-bottom: 12px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.01);
-      transition: all 0.2s;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      transition: transform 0.2s;
     }
 
     .place-item:hover {
-      background-color: #fff9eb;
-      border-color: #ffeaa7;
-      transform: translateY(-2px);
+      transform: translateY(-3px);
     }
 
     .place-name {
       font-weight: bold;
-      font-size: 16px;
-      color: #2d3436;
-      margin-bottom: 6px;
+      font-size: 15px;
     }
 
     .place-address {
       font-size: 13px;
-      color: #778ca3;
-      margin-bottom: 4px;
+      color: #868e96;
     }
 
-    .place-phone {
-      font-size: 12px;
-      color: #45aaf2;
-      font-weight: bold;
-    }
-
-    /* 지도 컴포넌트 감싸기 */
-    .map-wrapper {
-      flex: 1;
-      position: relative;
-      height: 100%;
-    }
-
+    /* 지도 */
     #map {
-      width: 100%;
-      height: 100%;
+      flex: 1;
     }
 
-    /* 1. [요청 기능] 둥둥 떠 있는 내 위치 복귀 단추 */
+    /* 내 위치 버튼 */
     .my-location-btn {
       position: absolute;
       bottom: 30px;
       right: 30px;
-      width: 56px;
-      height: 56px;
-      background: #ffffff;
+      z-index: 10;
+      background: #ffd43b;
       border: none;
       border-radius: 50%;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-      z-index: 5;
-      cursor: pointer;
+      width: 55px;
+      height: 55px;
       font-size: 22px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
-
-    .my-location-btn:hover {
-      transform: scale(1.1);
-      background: #fff9eb;
-    }
-
-    /* 반짝반짝 빛나는 내 위치 요정 점 */
-    .my-location-marker {
-      width: 14px;
-      height: 14px;
-      background: #45aaf2;
-      border: 3px solid #fff;
-      border-radius: 50%;
-      box-shadow: 0 0 10px rgba(69, 170, 242, 0.8);
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0% { box-shadow: 0 0 0 0 rgba(69, 170, 242, 0.7); }
-      70% { box-shadow: 0 0 0 12px rgba(69, 170, 242, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(69, 170, 242, 0); }
-    }
-
-    /* 3. [디자인] 순정 마커 위에 얹을 앙증맞은 색상 이름표 */
-    .hospital-badge {
-      padding: 5px 10px;
-      border-radius: 15px;
-      color: white;
-      font-size: 11px;
-      font-weight: bold;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.15);
-      white-space: nowrap;
-      transform: translateY(-44px); /* 마커 바로 위에 배치되도록 조절 */
-    }
-    .badge-blue { background-color: #007bff; }
-    .badge-red { background-color: #ff7675; }
-    .badge-yellow { background-color: #ffa502; color: #333; }
   </style>
 </head>
+
 <body>
-  <div class="container">
-    <div class="sidebar">
-      <div class="search-box">
-        <input id="keywordInput" class="search-input" placeholder="병원 이름이나 키워드 검색! ✨" />
-        <button class="search-button" onclick="searchByKeyword()">검색</button>
-      </div>
+<div class="container">
+  <div class="sidebar">
 
-      <div class="tab-container">
-        <button class="tab-button active" onclick="switchTab('이비인후과', this)">이비인후과</button>
-        <button class="tab-button" onclick="switchTab('소아과', this)">소아과</button>
-        <button class="tab-button" onclick="switchTab('내과', this)">내과</button>
-      </div>
-
-      <div id="resultList" class="result-container">
-        <div style="padding:20px; text-align:center; color:#aaa; font-size: 14px;">지도 요정이 내 자리를 찾는 중... 🧭</div>
-      </div>
+    <!-- 검색 -->
+    <div class="search-box">
+      <input id="keyword" placeholder="병원 이름 검색" />
+      <button onclick="searchHospitals()">🔍</button>
     </div>
 
-    <div class="map-wrapper">
-      <div id="map"></div>
-      <button class="my-location-btn" onclick="moveToMyLocation()">📍</button>
+    <!-- 탭 -->
+    <div class="tab-container">
+      <button class="tab-button active" onclick="switchTab('이비인후과', this)">이비인후과</button>
+      <button class="tab-button" onclick="switchTab('소아과', this)">소아과</button>
+      <button class="tab-button" onclick="switchTab('내과', this)">내과</button>
     </div>
+
+    <div id="resultList" class="result-container"></div>
   </div>
 
-  <script>
-    let map;
-    let placesService;
-    let markers = [];
-    let customOverlays = []; // 마커 위 색상 뱃지들을 담는 배열 추가
-    let currentPosition;
-    let currentCategory = '이비인후과';
+  <div id="map"></div>
+  <button class="my-location-btn" onclick="moveToMyLocation()">📍</button>
+</div>
 
-    // 카테고리별 매칭 뱃지 색상 클래스
-    const badgeClasses = {
-      '이비인후과': 'badge-blue',
-      '소아과': 'badge-red',
-      '내과': 'badge-yellow'
-    };
+<script>
+let map, placesService, currentPosition;
+let markers = [];
+let currentCategory = '이비인후과';
+
+kakao.maps.load(() => {
+  navigator.geolocation.getCurrentPosition(pos => {
+    currentPosition = new kakao.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
+    map = new kakao.maps.Map(document.getElementById("map"), {
+      center: currentPosition,
+      level: 4
+    });
+    placesService = new kakao.maps.services.Places();
+    searchHospitals();
+  });
+});
+
+function moveToMyLocation() {
+  map.panTo(currentPosition);
+}
+
+function switchTab(category, btn) {
+  currentCategory = category;
+  document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  searchHospitals();
+}
+
+function searchHospitals() {
+  const keyword = document.getElementById("keyword").value;
+  const query = keyword ? `${keyword} ${currentCategory}` : currentCategory;
+
+  placesService.keywordSearch(query, (data, status) => {
+    if (status === kakao.maps.services.Status.OK) displayPlaces(data);
+  }, {
+    location: currentPosition,
+    radius: 2000,
+    category_group_code: 'HP8'
+  });
+}
+
+function displayPlaces(places) {
+  clearMarkers();
+  const list = document.getElementById("resultList");
+  list.innerHTML = "";
+
+  const bounds = new kakao.maps.LatLngBounds();
+
+  places.forEach(p => {
+    const pos = new kakao.maps.LatLng(p.y, p.x);
+    const marker = new kakao.maps.Marker({ position: pos, map });
+    markers.push(marker);
+    bounds.extend(pos);
+
+    const item = document.createElement("div");
+    item.className = "place-item";
+    item.innerHTML = `
+      <div class="place-name">${p.place_name}</div>
+      <div class="place-address">${p.address_name}</div>
+    `;
+    item.onclick = () => map.panTo(pos);
+    list.appendChild(item);
+  });
+
+  map.setBounds(bounds);
+}
+
+function clearMarkers() {
+  markers.forEach(m => m.setMap(null));
+  markers = [];
+}
+</script>
+</body>
+</html>

@@ -2,17 +2,19 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>카카오맵 내 주변 병원 찾기</title>
+  <title>말랑말랑 내 주변 병원 찾기 둥둥!</title>
 
   <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=26af8b5871fd92c2781d578f68c9982c&libraries=services&autoload=false"></script>
 
   <style>
+    /* 귀여운 둥글둥글 폰트 스타일 정의 */
     html, body {
       margin: 0;
       padding: 0;
       height: 100%;
-      font-family: 'Malgun Gothic', dotum, sans-serif;
-      color: #333;
+      font-family: 'Malgun Gothic', sans-serif;
+      color: #4a4a4a;
+      background-color: #fcf9f2;
     }
 
     .container {
@@ -20,258 +22,139 @@
       height: 100%;
     }
 
-    /* 사이드바 디자인 */
+    /* 사이드바 디자인: 파스텔톤과 라운드 스타일 */
     .sidebar {
-      width: 380px;
+      width: 390px;
       height: 100%;
       display: flex;
       flex-direction: column;
       box-sizing: border-box;
-      box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+      background: #ffffff;
+      box-shadow: 4px 0 20px rgba(229, 215, 185, 0.3);
       z-index: 10;
-      background: #fff;
     }
 
-    /* 탭 메뉴 스타일 */
+    /* 상단 검색창 영역 */
+    .search-box {
+      padding: 20px 15px 10px 15px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .search-input {
+      flex: 1;
+      padding: 12px 18px;
+      border: 2px solid #ffeaa7;
+      border-radius: 25px;
+      font-size: 14px;
+      outline: none;
+      transition: all 0.3s;
+      background-color: #fffdf9;
+    }
+
+    .search-input:focus {
+      border-color: #ffb142;
+      background-color: #fff;
+    }
+
+    .search-button {
+      padding: 0 20px;
+      background: #ffb142;
+      color: white;
+      border: none;
+      border-radius: 25px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(255, 177, 66, 0.2);
+      transition: all 0.2s;
+    }
+
+    .search-button:hover {
+      background: #ff9f1a;
+      transform: translateY(-1px);
+    }
+
+    /* 탭 메뉴 스타일: 말랑말랑한 디자인 */
     .tab-container {
       display: flex;
-      background: #f8f9fa;
-      border-bottom: 2px solid #fee500;
+      padding: 10px 15px;
+      gap: 8px;
     }
 
     .tab-button {
       flex: 1;
-      padding: 15px 0;
-      border: none;
-      background: none;
-      font-size: 15px;
+      padding: 10px 0;
+      border: 2px solid #f1f2f6;
+      background: #f1f2f6;
+      font-size: 14px;
       font-weight: bold;
-      color: #666;
+      color: #7f8c8d;
       cursor: pointer;
+      border-radius: 20px;
       transition: all 0.2s;
       text-align: center;
     }
 
     .tab-button:hover {
-      background: #f1f3f5;
+      background: #e4e7eb;
     }
 
     .tab-button.active {
-      color: #000;
-      background: #fee500;
+      color: #fff;
+      background: #ff7675; /* 부드러운 핑크레드 */
+      border-color: #ff7675;
+      box-shadow: 0 4px 8px rgba(255, 118, 117, 0.3);
     }
 
     /* 결과 리스트 영역 */
     .result-container {
       flex: 1;
       overflow-y: auto;
-      padding: 10px;
+      padding: 10px 15px;
     }
 
     .place-item {
       padding: 15px;
-      border-bottom: 1px solid #edf2f7;
+      background: #fffdf9;
+      border: 2px solid #fcf7ed;
       cursor: pointer;
-      border-radius: 8px;
-      transition: background 0.2s;
-      margin-bottom: 5px;
+      border-radius: 18px;
+      transition: all 0.2s;
+      margin-bottom: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.02);
     }
 
     .place-item:hover {
-      background-color: #f8f9fa;
+      background-color: #fff9eb;
+      border-color: #ffeaa7;
+      transform: translateY(-2px);
     }
 
     .place-name {
       font-weight: bold;
       font-size: 16px;
-      color: #1a202c;
-      margin-bottom: 5px;
+      color: #2d3436;
+      margin-bottom: 6px;
     }
 
     .place-address {
       font-size: 13px;
-      color: #718096;
-      margin-bottom: 5px;
+      color: #778ca3;
+      margin-bottom: 4px;
     }
 
     .place-phone {
       font-size: 12px;
-      color: #3182ce;
+      color: #45aaf2;
+      font-weight: bold;
     }
 
-    /* 지도 영역 */
-    #map {
+    /* 지도 영역 래퍼 */
+    .map-wrapper {
       flex: 1;
+      position: relative;
       height: 100%;
     }
 
-    /* 현재 위치 커스텀 오버레이 (파란 점) 스타일 */
-    .my-location-marker {
-      width: 14px;
-      height: 14px;
-      background: #007bff;
-      border: 3px solid #fff;
-      border-radius: 50%;
-      box-shadow: 0 0 8px rgba(0,123,255,0.6);
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0% { box-shadow: 0 0 0 0 rgba(0,123,255,0.7); }
-      70% { box-shadow: 0 0 0 10px rgba(0,123,255,0); }
-      100% { box-shadow: 0 0 0 0 rgba(0,123,255,0); }
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="sidebar">
-      <div class="tab-container">
-        <button class="tab-button active" onclick="switchTab('이비인후과', this)">이비인후과</button>
-        <button class="tab-button" onclick="switchTab('소아과', this)">소아과</button>
-        <button class="tab-button" onclick="switchTab('내과', this)">내과</button>
-      </div>
-      <div id="resultList" class="result-container">
-        <div style="padding:20px; text-align:center; color:#999;">위치 정보를 불러오는 중입니다...</div>
-      </div>
-    </div>
-
-    <div id="map"></div>
-  </div>
-
-  <script>
-    let map;
-    let placesService;
-    let markers = [];
-    let currentPosition;
-    let currentCategory = '이비인후과';
-
-    // 카카오맵 공식 샘플 이미지 마커 활용 (유효한 실주소로 변경)
-    // 각각 다른 그래픽 마커(원형 숫자 마커)를 적용하여 카테고리를 시각적으로 분리함
-    const markerImages = {
-      '이비인후과': 'https://t1.daumcdn.net/localimg/localimages/07/2012/img/marker_p1.png', // 파란색 계열 1번 마커
-      '소아과': 'https://t1.daumcdn.net/localimg/localimages/07/2012/img/marker_p2.png',     // 빨간색 계열 2번 마커
-      '내과': 'https://t1.daumcdn.net/localimg/localimages/07/2012/img/marker_p3.png'       // 녹색/노란색 계열 3번 마커
-    };
-
-    // 카카오 지도 로드
-    kakao.maps.load(function () {
-      if (!navigator.geolocation) {
-        alert("위치 기능을 지원하지 않는 브라우저입니다.");
-        return;
-      }
-
-      navigator.geolocation.getCurrentPosition(function (position) {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        currentPosition = new kakao.maps.LatLng(lat, lng);
-
-        // 지도 생성
-        map = new kakao.maps.Map(document.getElementById("map"), {
-          center: currentPosition,
-          level: 4
-        });
-
-        // 현재 내 위치 파란 점 표시
-        const overlayContent = document.createElement('div');
-        overlayContent.className = 'my-location-marker';
-        
-        new kakao.maps.CustomOverlay({
-          position: currentPosition,
-          content: overlayContent,
-          map: map
-        });
-
-        // 장소 검색 객체 생성
-        placesService = new kakao.maps.services.Places();
-
-        // 초기 검색 실행
-        searchHospitals();
-      }, function() {
-        alert("위치 허용을 승인해야 주변 병원을 검색할 수 있습니다.");
-      });
-    });
-
-    // 탭 전환 함수
-    function switchTab(category, element) {
-      currentCategory = category;
-
-      const buttons = document.querySelectorAll('.tab-button');
-      buttons.forEach(btn => btn.classList.remove('active'));
-      element.classList.add('active');
-
-      searchHospitals();
-    }
-
-    // 병원 검색 함수
-    function searchHospitals() {
-      if (!currentPosition || !placesService) return;
-
-      placesService.keywordSearch(currentCategory, function (data, status) {
-        if (status === kakao.maps.services.Status.OK) {
-          displayPlaces(data);
-        } else {
-          const list = document.getElementById("resultList");
-          list.innerHTML = `<div style="padding:20px; text-align:center; color:#999;">주변에 ${currentCategory} 결과가 없습니다.</div>`;
-          clearMarkers();
-        }
-      }, {
-        location: currentPosition,
-        radius: 2000,
-        category_group_code: 'HP8' // 병원 코드 고정
-      });
-    }
-
-    // 결과 표시 및 마커 생성
-    function displayPlaces(places) {
-      const list = document.getElementById("resultList");
-      list.innerHTML = "";
-      clearMarkers();
-
-      const bounds = new kakao.maps.LatLngBounds();
-
-      // 카테고리별 유효한 이미지 가져오기
-      const imageSrc = markerImages[currentCategory];
-      const imageSize = new kakao.maps.Size(28, 28); 
-      const markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize);
-
-      places.forEach(place => {
-        const position = new kakao.maps.LatLng(place.y, place.x);
-
-        // 마커 객체 생성
-        const marker = new kakao.maps.Marker({
-          position: position,
-          image: markerImage,
-          map: map
-        });
-
-        markers.push(marker);
-        bounds.extend(position);
-
-        // 목록 생성
-        const item = document.createElement("div");
-        item.className = "place-item";
-        item.innerHTML = `
-          <div class="place-name">${place.place_name}</div>
-          <div class="place-address">${place.address_name}</div>
-          ${place.phone ? `<div class="place-phone">${place.phone}</div>` : ''}
-        `;
-
-        item.onclick = () => {
-          map.setCenter(position);
-          map.setLevel(3);
-        };
-        list.appendChild(item);
-      });
-
-      map.setBounds(bounds);
-    }
-
-    // 마커 삭제
-    function clearMarkers() {
-      markers.forEach(m => m.setMap(null));
-      markers = [];
-    }
-  </script>
-</body>
-</html>
+    #map {
+      width: 100%;

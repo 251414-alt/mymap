@@ -2,17 +2,17 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>내 주변 병원 찾기 둥둥</title>
+  <title>내 주변 병원 찾기</title>
 
   <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=26af8b5871fd92c2781d578f68c9982c&libraries=services&autoload=false"></script>
 
   <style>
-    /* 귀여운 둥글둥글 폰트 스타일 정의 */
+    /* 전체 테마 및 둥글둥글 스타일 패키지 */
     html, body {
       margin: 0;
       padding: 0;
       height: 100%;
-      font-family: 'Malgun Gothic', sans-serif;
+      font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
       color: #4a4a4a;
       background-color: #fcf9f2;
     }
@@ -22,19 +22,19 @@
       height: 100%;
     }
 
-    /* 사이드바 디자인: 파스텔톤과 라운드 스타일 */
+    /* 포근한 느낌의 사이드바 */
     .sidebar {
-      width: 390px;
+      width: 380px;
       height: 100%;
       display: flex;
       flex-direction: column;
       box-sizing: border-box;
       background: #ffffff;
-      box-shadow: 4px 0 20px rgba(229, 215, 185, 0.3);
+      box-shadow: 4px 0 20px rgba(0,0,0,0.05);
       z-index: 10;
     }
 
-    /* 상단 검색창 영역 */
+    /* 동글동글 검색창 */
     .search-box {
       padding: 20px 15px 10px 15px;
       display: flex;
@@ -48,13 +48,11 @@
       border-radius: 25px;
       font-size: 14px;
       outline: none;
-      transition: all 0.3s;
       background-color: #fffdf9;
     }
 
     .search-input:focus {
       border-color: #ffb142;
-      background-color: #fff;
     }
 
     .search-button {
@@ -65,16 +63,9 @@
       border-radius: 25px;
       font-weight: bold;
       cursor: pointer;
-      box-shadow: 0 4px 6px rgba(255, 177, 66, 0.2);
-      transition: all 0.2s;
     }
 
-    .search-button:hover {
-      background: #ff9f1a;
-      transform: translateY(-1px);
-    }
-
-    /* 탭 메뉴 스타일: 말랑말랑한 디자인 */
+    /* 말랑말랑 카테고리 탭 */
     .tab-container {
       display: flex;
       padding: 10px 15px;
@@ -84,29 +75,23 @@
     .tab-button {
       flex: 1;
       padding: 10px 0;
-      border: 2px solid #f1f2f6;
+      border: none;
       background: #f1f2f6;
       font-size: 14px;
       font-weight: bold;
       color: #7f8c8d;
       cursor: pointer;
       border-radius: 20px;
-      transition: all 0.2s;
       text-align: center;
-    }
-
-    .tab-button:hover {
-      background: #e4e7eb;
     }
 
     .tab-button.active {
       color: #fff;
-      background: #ff7675; /* 부드러운 핑크레드 */
-      border-color: #ff7675;
+      background: #ff7675; /* 따뜻한 핑크레드 */
       box-shadow: 0 4px 8px rgba(255, 118, 117, 0.3);
     }
 
-    /* 결과 리스트 영역 */
+    /* 결과 병원 리스트 카드 */
     .result-container {
       flex: 1;
       overflow-y: auto;
@@ -119,42 +104,6 @@
       border: 2px solid #fcf7ed;
       cursor: pointer;
       border-radius: 18px;
-      transition: all 0.2s;
       margin-bottom: 10px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+      transition: all 0.2s;
     }
-
-    .place-item:hover {
-      background-color: #fff9eb;
-      border-color: #ffeaa7;
-      transform: translateY(-2px);
-    }
-
-    .place-name {
-      font-weight: bold;
-      font-size: 16px;
-      color: #2d3436;
-      margin-bottom: 6px;
-    }
-
-    .place-address {
-      font-size: 13px;
-      color: #778ca3;
-      margin-bottom: 4px;
-    }
-
-    .place-phone {
-      font-size: 12px;
-      color: #45aaf2;
-      font-weight: bold;
-    }
-
-    /* 지도 영역 래퍼 */
-    .map-wrapper {
-      flex: 1;
-      position: relative;
-      height: 100%;
-    }
-
-    #map {
-      width: 100%;

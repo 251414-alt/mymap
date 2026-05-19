@@ -2,7 +2,9 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>내 주변 병원 찾기</title>
+  <title>카카오맵 병원 검색</title>
+
+  <!-- 카카오맵 SDK -->
   <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=26af8b5871fd92c2781d578f68c9982c&libraries=services&autoload=false"></script>
 
   <style>
@@ -11,7 +13,6 @@
       padding: 0;
       height: 100%;
       font-family: 'Malgun Gothic', sans-serif;
-      background: #fffaf0;
     }
 
     .container {
@@ -22,44 +23,42 @@
     /* 사이드바 */
     .sidebar {
       width: 380px;
-      background: #ffffff;
       display: flex;
       flex-direction: column;
-      box-shadow: 3px 0 15px rgba(0,0,0,0.1);
+      background: #fff;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+      z-index: 10;
     }
 
-    /* 검색 영역 */
+    /* 검색창 */
     .search-box {
-      padding: 15px;
+      padding: 12px;
       display: flex;
       gap: 8px;
-      background: #fff3bf;
+      border-bottom: 1px solid #eee;
     }
 
     .search-box input {
       flex: 1;
       padding: 10px 12px;
       border-radius: 20px;
-      border: none;
+      border: 1px solid #ddd;
       outline: none;
-      font-size: 14px;
-      background: #fff;
     }
 
     .search-box button {
+      padding: 0 16px;
+      border-radius: 20px;
       border: none;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      background: #ffd43b;
+      background: #fee500;
       cursor: pointer;
-      font-size: 16px;
+      font-weight: bold;
     }
 
     /* 탭 */
     .tab-container {
       display: flex;
-      background: #fff9db;
+      border-bottom: 2px solid #fee500;
     }
 
     .tab-button {
@@ -67,17 +66,17 @@
       padding: 12px 0;
       border: none;
       background: none;
-      font-weight: bold;
       cursor: pointer;
-      border-bottom: 3px solid transparent;
+      font-weight: bold;
+      color: #666;
     }
 
     .tab-button.active {
-      border-bottom: 3px solid #fcc419;
-      color: #f08c00;
+      background: #fee500;
+      color: #000;
     }
 
-    /* 리스트 */
+    /* 결과 리스트 */
     .result-container {
       flex: 1;
       overflow-y: auto;
@@ -85,48 +84,46 @@
     }
 
     .place-item {
-      background: #fff;
-      border-radius: 15px;
-      padding: 15px;
-      margin-bottom: 10px;
+      padding: 14px;
+      border-bottom: 1px solid #eee;
       cursor: pointer;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-      transition: transform 0.2s;
     }
 
     .place-item:hover {
-      transform: translateY(-3px);
+      background: #f8f9fa;
     }
 
     .place-name {
       font-weight: bold;
-      font-size: 15px;
+      margin-bottom: 4px;
     }
 
     .place-address {
       font-size: 13px;
-      color: #868e96;
+      color: #666;
     }
 
     /* 지도 */
     #map {
       flex: 1;
+      height: 100%;
     }
 
     /* 내 위치 버튼 */
     .my-location-btn {
       position: absolute;
-      bottom: 30px;
       right: 30px;
-      z-index: 10;
-      background: #ffd43b;
-      border: none;
+      bottom: 30px;
+      z-index: 20;
+      width: 56px;
+      height: 56px;
       border-radius: 50%;
-      width: 55px;
-      height: 55px;
+      border: none;
+      background: #007bff;
+      color: #fff;
       font-size: 22px;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
   </style>
 </head>
@@ -137,8 +134,8 @@
 
     <!-- 검색 -->
     <div class="search-box">
-      <input id="keyword" placeholder="병원 이름 검색" />
-      <button onclick="searchHospitals()">🔍</button>
+      <input id="keyword" placeholder="병원 이름 / 지역 검색" />
+      <button onclick="searchHospitals()">검색</button>
     </div>
 
     <!-- 탭 -->
@@ -148,7 +145,11 @@
       <button class="tab-button" onclick="switchTab('내과', this)">내과</button>
     </div>
 
-    <div id="resultList" class="result-container"></div>
+    <div id="resultList" class="result-container">
+      <div style="padding:20px; text-align:center; color:#999;">
+        검색어를 입력하거나 탭을 눌러주세요
+      </div>
+    </div>
   </div>
 
   <div id="map"></div>
@@ -156,26 +157,49 @@
 </div>
 
 <script>
-let map, placesService, currentPosition;
+let map;
+let placesService;
 let markers = [];
+let currentPosition;
 let currentCategory = '이비인후과';
 
-kakao.maps.load(() => {
-  navigator.geolocation.getCurrentPosition(pos => {
-    currentPosition = new kakao.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
-    map = new kakao.maps.Map(document.getElementById("map"), {
-      center: currentPosition,
-      level: 4
-    });
-    placesService = new kakao.maps.services.Places();
-    searchHospitals();
+/* 카카오맵 로드 */
+kakao.maps.load(function () {
+
+  // 기본 지도 (전국 뷰 느낌)
+  map = new kakao.maps.Map(document.getElementById("map"), {
+    center: new kakao.maps.LatLng(36.5, 127.8),
+    level: 13
   });
+
+  placesService = new kakao.maps.services.Places();
+
+  // 내 위치 가져오기 (버튼용)
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(pos => {
+      currentPosition = new kakao.maps.LatLng(
+        pos.coords.latitude,
+        pos.coords.longitude
+      );
+
+      // 파란 점 표시
+      new kakao.maps.CustomOverlay({
+        position: currentPosition,
+        content: '<div style="width:14px;height:14px;background:#007bff;border:3px solid #fff;border-radius:50%;"></div>',
+        map: map
+      });
+    });
+  }
 });
 
+/* 내 위치로 이동 */
 function moveToMyLocation() {
+  if (!currentPosition) return;
   map.panTo(currentPosition);
+  map.setLevel(4);
 }
 
+/* 탭 변경 */
 function switchTab(category, btn) {
   currentCategory = category;
   document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
@@ -183,19 +207,25 @@ function switchTab(category, btn) {
   searchHospitals();
 }
 
+/* 검색 (❗ 주변 제한 없음) */
 function searchHospitals() {
-  const keyword = document.getElementById("keyword").value;
-  const query = keyword ? `${keyword} ${currentCategory}` : currentCategory;
+  const keyword = document.getElementById("keyword").value.trim();
+  const query = keyword || currentCategory;
 
-  placesService.keywordSearch(query, (data, status) => {
-    if (status === kakao.maps.services.Status.OK) displayPlaces(data);
-  }, {
-    location: currentPosition,
-    radius: 2000,
-    category_group_code: 'HP8'
+  placesService.keywordSearch(query, function (data, status) {
+    if (status === kakao.maps.services.Status.OK) {
+      displayPlaces(data);
+    } else {
+      document.getElementById("resultList").innerHTML =
+        `<div style="padding:20px; text-align:center; color:#999;">
+          검색 결과가 없습니다
+        </div>`;
+      clearMarkers();
+    }
   });
 }
 
+/* 결과 표시 */
 function displayPlaces(places) {
   clearMarkers();
   const list = document.getElementById("resultList");
@@ -203,29 +233,45 @@ function displayPlaces(places) {
 
   const bounds = new kakao.maps.LatLngBounds();
 
-  places.forEach(p => {
-    const pos = new kakao.maps.LatLng(p.y, p.x);
-    const marker = new kakao.maps.Marker({ position: pos, map });
+  places.forEach(place => {
+    const position = new kakao.maps.LatLng(place.y, place.x);
+
+    const marker = new kakao.maps.Marker({
+      position,
+      map
+    });
+
     markers.push(marker);
-    bounds.extend(pos);
+    bounds.extend(position);
 
     const item = document.createElement("div");
     item.className = "place-item";
     item.innerHTML = `
-      <div class="place-name">${p.place_name}</div>
-      <div class="place-address">${p.address_name}</div>
+      <div class="place-name">${place.place_name}</div>
+      <div class="place-address">${place.address_name}</div>
     `;
-    item.onclick = () => map.panTo(pos);
+
+    item.onclick = () => {
+      map.panTo(position);
+      map.setLevel(4);
+    };
+
     list.appendChild(item);
   });
 
   map.setBounds(bounds);
 }
 
+/* 마커 제거 */
 function clearMarkers() {
   markers.forEach(m => m.setMap(null));
   markers = [];
 }
+
+/* 엔터 검색 */
+document.getElementById("keyword").addEventListener("keydown", e => {
+  if (e.key === "Enter") searchHospitals();
+});
 </script>
 </body>
 </html>

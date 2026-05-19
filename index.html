@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>내 주변 병원 찾기</title>
+  <title>말랑말랑 내 주변 병원 찾기</title>
 
   <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=26af8b5871fd92c2781d578f68c9982c&libraries=services&autoload=false"></script>
 
@@ -107,3 +107,109 @@
       margin-bottom: 10px;
       transition: all 0.2s;
     }
+
+    .place-item:hover {
+      background-color: #fff9eb;
+      border-color: #ffeaa7;
+      transform: translateY(-2px);
+    }
+
+    .place-name {
+      font-weight: bold;
+      font-size: 16px;
+      color: #2d3436;
+      margin-bottom: 6px;
+    }
+
+    .place-address {
+      font-size: 13px;
+      color: #778ca3;
+      margin-bottom: 4px;
+    }
+
+    .place-phone {
+      font-size: 12px;
+      color: #45aaf2;
+      font-weight: bold;
+    }
+
+    /* 지도 레이아웃 */
+    .map-wrapper {
+      flex: 1;
+      position: relative;
+      height: 100%;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* 둥둥 떠 있는 내 위치 버튼 */
+    .my-location-btn {
+      position: absolute;
+      bottom: 30px;
+      right: 30px;
+      width: 54px;
+      height: 54px;
+      background: #ffffff;
+      border: none;
+      border-radius: 50%;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+      z-index: 5;
+      cursor: pointer;
+      font-size: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* 내 위치 표시용 반짝이는 파란 오버레이 요정 점 */
+    .my-location-marker {
+      width: 14px;
+      height: 14px;
+      background: #45aaf2;
+      border: 3px solid #fff;
+      border-radius: 50%;
+      box-shadow: 0 0 10px rgba(69, 170, 242, 0.8);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(69, 170, 242, 0.7); }
+      70% { box-shadow: 0 0 0 12px rgba(69, 170, 242, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(69, 170, 242, 0); }
+    }
+
+    /* 마커 위에 동동 띄울 귀여운 카테고리 색상 뱃지 */
+    .hospital-badge {
+      padding: 4px 8px;
+      border-radius: 12px;
+      color: white;
+      font-size: 11px;
+      font-weight: bold;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      white-space: nowrap;
+      transform: translateY(-42px); /* 마커 바로 위에 배치되도록 조절 */
+    }
+    .badge-blue { background-color: #007bff; }
+    .badge-red { background-color: #ff7675; }
+    .badge-yellow { background-color: #ffa502; color: #333; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="sidebar">
+      <div class="search-box">
+        <input id="keywordInput" class="search-input" placeholder="병원 이름이나 키워드 검색! ✨" />
+        <button class="search-button" onclick="searchByKeyword()">검색</button>
+      </div>
+
+      <div class="tab-container">
+        <button id="tab-ent" class="tab-button active" onclick="switchTab('이비인후과', this)">이비인후과</button>
+        <button id="tab-ped" class="tab-button" onclick="switchTab('소아과', this)">소아과</button>
+        <button id="tab-med" class="tab-button" onclick="switchTab('내과', this)">내과</button>
+      </div>
+
+      <div id="resultList" class="result-container">
+        <div style="padding:20px; text-align:center; color:#aaa; font

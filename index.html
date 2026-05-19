@@ -2,8 +2,9 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>카카오맵 병원 찾기</title>
+  <title>카카오맵 병원 검색</title>
 
+  <!-- 카카오맵 SDK -->
   <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=26af8b5871fd92c2781d578f68c9982c&libraries=services&autoload=false"></script>
 
   <style>
@@ -19,25 +20,27 @@
       height: 100%;
     }
 
+    /* 사이드바 */
     .sidebar {
-      width: 360px;
+      width: 380px;
       display: flex;
       flex-direction: column;
       background: #fff;
-      box-shadow: 2px 0 10px rgba(0,0,0,0.15);
+      box-shadow: 2px 0 10px rgba(0,0,0,0.1);
       z-index: 10;
     }
 
+    /* 검색창 */
     .search-box {
+      padding: 12px;
       display: flex;
       gap: 8px;
-      padding: 12px;
       border-bottom: 1px solid #eee;
     }
 
     .search-box input {
       flex: 1;
-      padding: 10px 14px;
+      padding: 10px 12px;
       border-radius: 20px;
       border: 1px solid #ddd;
       outline: none;
@@ -48,10 +51,11 @@
       border-radius: 20px;
       border: none;
       background: #fee500;
-      font-weight: bold;
       cursor: pointer;
+      font-weight: bold;
     }
 
+    /* 탭 */
     .tab-container {
       display: flex;
       border-bottom: 2px solid #fee500;
@@ -62,8 +66,8 @@
       padding: 12px 0;
       border: none;
       background: none;
-      font-weight: bold;
       cursor: pointer;
+      font-weight: bold;
       color: #666;
     }
 
@@ -72,6 +76,7 @@
       color: #000;
     }
 
+    /* 결과 리스트 */
     .result-container {
       flex: 1;
       overflow-y: auto;
@@ -98,15 +103,18 @@
       color: #666;
     }
 
+    /* 지도 */
     #map {
       flex: 1;
       height: 100%;
     }
 
+    /* 내 위치 버튼 */
     .my-location-btn {
       position: absolute;
       right: 30px;
       bottom: 30px;
+      z-index: 20;
       width: 56px;
       height: 56px;
       border-radius: 50%;
@@ -116,20 +124,21 @@
       font-size: 22px;
       cursor: pointer;
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      z-index: 20;
     }
   </style>
 </head>
 
 <body>
 <div class="container">
-
   <div class="sidebar">
+
+    <!-- 검색 -->
     <div class="search-box">
-      <input id="keyword" placeholder="병원명 / 지역 검색" />
+      <input id="keyword" placeholder="병원 이름 / 지역 검색" />
       <button onclick="searchHospitals()">검색</button>
     </div>
 
+    <!-- 탭 -->
     <div class="tab-container">
       <button class="tab-button active" onclick="switchTab('이비인후과', this)">이비인후과</button>
       <button class="tab-button" onclick="switchTab('소아과', this)">소아과</button>
@@ -138,14 +147,13 @@
 
     <div id="resultList" class="result-container">
       <div style="padding:20px; text-align:center; color:#999;">
-        검색어를 입력하거나 카테고리를 선택하세요
+        검색어를 입력하거나 탭을 눌러주세요
       </div>
     </div>
   </div>
 
   <div id="map"></div>
   <button class="my-location-btn" onclick="moveToMyLocation()">📍</button>
-
 </div>
 
 <script>
@@ -155,8 +163,10 @@ let markers = [];
 let currentPosition;
 let currentCategory = '이비인후과';
 
-kakao.maps.load(() => {
+/* 카카오맵 로드 */
+kakao.maps.load(function () {
 
+  // 기본 지도 (전국 뷰 느낌)
   map = new kakao.maps.Map(document.getElementById("map"), {
     center: new kakao.maps.LatLng(36.5, 127.8),
     level: 13
@@ -164,6 +174,7 @@ kakao.maps.load(() => {
 
   placesService = new kakao.maps.services.Places();
 
+  // 내 위치 가져오기 (버튼용)
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(pos => {
       currentPosition = new kakao.maps.LatLng(
@@ -171,44 +182,21 @@ kakao.maps.load(() => {
         pos.coords.longitude
       );
 
+      // 파란 점 표시
       new kakao.maps.CustomOverlay({
         position: currentPosition,
         content: '<div style="width:14px;height:14px;background:#007bff;border:3px solid #fff;border-radius:50%;"></div>',
-        map
+        map: map
       });
     });
   }
 });
 
-/* 내 위치 + 내 주변 카테고리 */
+/* 내 위치로 이동 */
 function moveToMyLocation() {
   if (!currentPosition) return;
   map.panTo(currentPosition);
   map.setLevel(4);
-  searchNearbyByCategory();
-}
-
-/* 내 주변 병원 (카테고리 기준) */
-function searchNearbyByCategory() {
-  clearMarkers();
-
-  placesService.keywordSearch(
-    currentCategory,
-    (data, status) => {
-      if (status === kakao.maps.services.Status.OK) {
-        displayPlaces(data);
-      } else {
-        document.getElementById("resultList").innerHTML =
-          `<div style="padding:20px; text-align:center; color:#999;">
-            내 주변에 ${currentCategory} 결과가 없습니다
-          </div>`;
-      }
-    },
-    {
-      location: currentPosition,
-      radius: 2000
-    }
-  );
 }
 
 /* 탭 변경 */
@@ -216,16 +204,15 @@ function switchTab(category, btn) {
   currentCategory = category;
   document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  searchHospitals();
 }
 
-/* 전국 검색 */
+/* 검색 (❗ 주변 제한 없음) */
 function searchHospitals() {
   const keyword = document.getElementById("keyword").value.trim();
   const query = keyword || currentCategory;
 
-  clearMarkers();
-
-  placesService.keywordSearch(query, (data, status) => {
+  placesService.keywordSearch(query, function (data, status) {
     if (status === kakao.maps.services.Status.OK) {
       displayPlaces(data);
     } else {
@@ -233,12 +220,14 @@ function searchHospitals() {
         `<div style="padding:20px; text-align:center; color:#999;">
           검색 결과가 없습니다
         </div>`;
+      clearMarkers();
     }
   });
 }
 
 /* 결과 표시 */
 function displayPlaces(places) {
+  clearMarkers();
   const list = document.getElementById("resultList");
   list.innerHTML = "";
 
@@ -273,15 +262,16 @@ function displayPlaces(places) {
   map.setBounds(bounds);
 }
 
+/* 마커 제거 */
 function clearMarkers() {
   markers.forEach(m => m.setMap(null));
   markers = [];
 }
 
+/* 엔터 검색 */
 document.getElementById("keyword").addEventListener("keydown", e => {
   if (e.key === "Enter") searchHospitals();
 });
 </script>
-
 </body>
 </html>

@@ -7,62 +7,163 @@
   <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=26af8b5871fd92c2781d578f68c9982c&libraries=services&autoload=false"></script>
 
   <style>
-    html, body { margin:0; padding:0; height:100%; font-family:'Malgun Gothic', sans-serif; }
-    .container { display:flex; height:100%; }
-
-    .sidebar {
-      width:380px; display:flex; flex-direction:column;
-      background:#fff; box-shadow:2px 0 10px rgba(0,0,0,0.1); z-index:10;
+    :root {
+      --blue-main: #4dabf7;
+      --blue-soft: #e7f3ff;
+      --blue-deep: #339af0;
+      --gray-text: #555;
     }
 
+    html, body {
+      margin:0; padding:0; height:100%;
+      font-family:'Malgun Gothic', sans-serif;
+      background: var(--blue-soft);
+    }
+
+    .container {
+      display:flex; height:100%;
+    }
+
+    /* 사이드바 */
+    .sidebar {
+      width:380px;
+      display:flex;
+      flex-direction:column;
+      background:#fff;
+      border-radius:0 24px 24px 0;
+      box-shadow:4px 0 20px rgba(77,171,247,0.25);
+      z-index:10;
+      overflow:hidden;
+    }
+
+    /* 검색 영역 */
     .search-box {
-      padding:12px; display:flex; gap:8px; border-bottom:1px solid #eee;
+      padding:16px;
+      display:flex;
+      gap:10px;
+      background: var(--blue-soft);
     }
 
     .search-box input {
-      flex:1; padding:10px 12px; border-radius:20px; border:1px solid #ddd;
+      flex:1;
+      padding:12px 14px;
+      border-radius:999px;
+      border:2px solid #d0ebff;
+      outline:none;
+      font-size:14px;
+    }
+
+    .search-box input:focus {
+      border-color: var(--blue-main);
     }
 
     .search-box button {
-      padding:0 16px; border-radius:20px; border:none;
-      background:#fee500; font-weight:bold; cursor:pointer;
+      padding:0 18px;
+      border-radius:999px;
+      border:none;
+      background: var(--blue-main);
+      color:#fff;
+      font-weight:bold;
+      cursor:pointer;
+      transition:0.2s;
     }
 
+    .search-box button:hover {
+      background: var(--blue-deep);
+      transform:scale(1.05);
+    }
+
+    /* 탭 */
     .tab-container {
-      display:flex; border-bottom:2px solid #fee500;
+      display:flex;
+      padding:10px;
+      gap:8px;
+      background:#fff;
     }
 
     .tab-button {
-      flex:1; padding:12px 0; border:none;
-      background:none; font-weight:bold; cursor:pointer; color:#666;
+      flex:1;
+      padding:10px 0;
+      border:none;
+      border-radius:14px;
+      background:#f1f3f5;
+      font-weight:bold;
+      cursor:pointer;
+      color:#666;
+      transition:0.2s;
     }
 
     .tab-button.active {
-      background:#fee500; color:#000;
+      background: var(--blue-main);
+      color:#fff;
+      box-shadow:0 4px 10px rgba(77,171,247,0.4);
     }
 
+    .tab-button:hover {
+      transform:translateY(-2px);
+    }
+
+    /* 결과 리스트 */
     .result-container {
-      flex:1; overflow-y:auto; padding:10px;
+      flex:1;
+      overflow-y:auto;
+      padding:10px 14px;
+      background:#f8fbff;
     }
 
     .place-item {
-      padding:14px; border-bottom:1px solid #eee; cursor:pointer;
+      background:#fff;
+      border-radius:16px;
+      padding:14px;
+      margin-bottom:10px;
+      cursor:pointer;
+      box-shadow:0 4px 12px rgba(0,0,0,0.06);
+      transition:0.2s;
     }
 
     .place-item:hover {
-      background:#f8f9fa;
+      transform:scale(1.02);
+      box-shadow:0 6px 16px rgba(77,171,247,0.25);
     }
 
-    .place-name { font-weight:bold; }
-    .place-address { font-size:13px; color:#666; }
+    .place-name {
+      font-weight:bold;
+      color:#222;
+    }
 
-    #map { flex:1; height:100%; }
+    .place-address {
+      font-size:13px;
+      color:var(--gray-text);
+      margin-top:4px;
+    }
 
+    /* 지도 */
+    #map {
+      flex:1;
+      height:100%;
+    }
+
+    /* 내 위치 버튼 */
     .my-location-btn {
-      position:absolute; right:30px; bottom:30px;
-      width:56px; height:56px; border-radius:50%;
-      background:#007bff; color:#fff; font-size:22px;
-      border:none; cursor:pointer; z-index:20;
+      position:absolute;
+      right:30px;
+      bottom:30px;
+      width:60px;
+      height:60px;
+      border-radius:50%;
+      background: var(--blue-main);
+      color:#fff;
+      font-size:24px;
+      border:none;
+      cursor:pointer;
+      box-shadow:0 6px 16px rgba(77,171,247,0.45);
+      transition:0.2s;
+      z-index:20;
+    }
+
+    .my-location-btn:hover {
+      background: var(--blue-deep);
+      transform:scale(1.1);
     }
   </style>
 </head>
@@ -71,19 +172,19 @@
 <div class="container">
   <div class="sidebar">
     <div class="search-box">
-      <input id="keyword" placeholder="지역 또는 병원 이름 검색" />
+      <input id="keyword" placeholder="📍 지역 또는 병원 이름 검색" />
       <button onclick="searchHospitals()">검색</button>
     </div>
 
     <div class="tab-container">
-      <button class="tab-button active" onclick="switchTab('이비인후과', this)">이비인후과</button>
-      <button class="tab-button" onclick="switchTab('소아과', this)">소아과</button>
-      <button class="tab-button" onclick="switchTab('내과', this)">내과</button>
+      <button class="tab-button active" onclick="switchTab('이비인후과', this)">👂 이비인후과</button>
+      <button class="tab-button" onclick="switchTab('소아과', this)">🧸 소아과</button>
+      <button class="tab-button" onclick="switchTab('내과', this)">🩺 내과</button>
     </div>
 
     <div id="resultList" class="result-container">
-      <div style="padding:20px;text-align:center;color:#999;">
-        지역을 검색하거나 진료과를 선택하세요
+      <div style="padding:30px;text-align:center;color:#999;">
+        귀여운 병원 검색을 시작해요 💙
       </div>
     </div>
   </div>
@@ -99,7 +200,6 @@ let currentPosition = null;
 let currentCategory = '이비인후과';
 let isNearMode = false;
 
-/* 지도 초기화 */
 kakao.maps.load(() => {
   map = new kakao.maps.Map(document.getElementById("map"), {
     center: new kakao.maps.LatLng(36.5, 127.8),
@@ -108,64 +208,44 @@ kakao.maps.load(() => {
 
   placesService = new kakao.maps.services.Places();
 
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(pos => {
-      currentPosition = new kakao.maps.LatLng(
-        pos.coords.latitude,
-        pos.coords.longitude
-      );
+  navigator.geolocation?.getCurrentPosition(pos => {
+    currentPosition = new kakao.maps.LatLng(
+      pos.coords.latitude,
+      pos.coords.longitude
+    );
 
-      new kakao.maps.CustomOverlay({
-        position: currentPosition,
-        content:
-          '<div style="width:14px;height:14px;background:#007bff;border:3px solid #fff;border-radius:50%;"></div>',
-        map
-      });
+    new kakao.maps.CustomOverlay({
+      position: currentPosition,
+      content:
+        '<div style="width:16px;height:16px;background:#4dabf7;border:4px solid #fff;border-radius:50%;"></div>',
+      map
     });
-  }
+  });
 });
 
-/* 📍 내 위치 기준 검색 */
 function moveToMyLocation() {
   if (!currentPosition) return;
-
   isNearMode = true;
   map.panTo(currentPosition);
   map.setLevel(4);
   searchHospitals();
 }
 
-/* 진료과 탭 */
 function switchTab(category, btn) {
   currentCategory = category;
   isNearMode = false;
-
-  document.querySelectorAll('.tab-button').forEach(b =>
-    b.classList.remove('active')
-  );
+  document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-
   searchHospitals();
 }
 
-/* 병원 검색 */
 function searchHospitals() {
   const keyword = document.getElementById("keyword").value.trim();
-
-  // ⭐ 지역 + 진료과 결합
-  const query = keyword
-    ? `${keyword} ${currentCategory}`
-    : currentCategory;
+  const query = keyword ? `${keyword} ${currentCategory}` : currentCategory;
 
   const options = isNearMode && currentPosition
-    ? {
-        location: currentPosition,
-        radius: 2000,
-        category_group_code: "HP8"
-      }
-    : {
-        category_group_code: "HP8"
-      };
+    ? { location: currentPosition, radius: 2000, category_group_code: "HP8" }
+    : { category_group_code: "HP8" };
 
   placesService.keywordSearch(query, (data, status) => {
     if (status === kakao.maps.services.Status.OK) {
@@ -173,12 +253,11 @@ function searchHospitals() {
     } else {
       clearMarkers();
       document.getElementById("resultList").innerHTML =
-        `<div style="padding:20px;text-align:center;color:#999;">결과 없음</div>`;
+        `<div style="padding:30px;text-align:center;color:#999;">결과가 없어요 😢</div>`;
     }
   }, options);
 }
 
-/* 검색 결과 표시 */
 function displayPlaces(places) {
   clearMarkers();
   const list = document.getElementById("resultList");
@@ -188,7 +267,6 @@ function displayPlaces(places) {
 
   places.forEach(place => {
     const pos = new kakao.maps.LatLng(place.y, place.x);
-
     const marker = new kakao.maps.Marker({ position: pos, map });
     markers.push(marker);
 
@@ -209,18 +287,14 @@ function displayPlaces(places) {
     list.appendChild(item);
   });
 
-  if (!isNearMode && places.length > 0) {
-    map.setBounds(bounds);
-  }
+  if (!isNearMode && places.length > 0) map.setBounds(bounds);
 }
 
-/* 마커 초기화 */
 function clearMarkers() {
   markers.forEach(m => m.setMap(null));
   markers = [];
 }
 
-/* 엔터로 검색 */
 document.getElementById("keyword").addEventListener("keydown", e => {
   if (e.key === "Enter") {
     isNearMode = false;

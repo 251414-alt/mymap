@@ -15,17 +15,44 @@
       background:#fff; box-shadow:2px 0 10px rgba(0,0,0,0.1); z-index:10;
     }
 
-    .search-box { padding:12px; display:flex; gap:8px; border-bottom:1px solid #eee; }
-    .search-box input { flex:1; padding:10px 12px; border-radius:20px; border:1px solid #ddd; }
-    .search-box button { padding:0 16px; border-radius:20px; border:none; background:#fee500; font-weight:bold; cursor:pointer; }
+    .search-box {
+      padding:12px; display:flex; gap:8px; border-bottom:1px solid #eee;
+    }
 
-    .tab-container { display:flex; border-bottom:2px solid #fee500; }
-    .tab-button { flex:1; padding:12px 0; border:none; background:none; font-weight:bold; cursor:pointer; color:#666; }
-    .tab-button.active { background:#fee500; color:#000; }
+    .search-box input {
+      flex:1; padding:10px 12px; border-radius:20px; border:1px solid #ddd;
+    }
 
-    .result-container { flex:1; overflow-y:auto; padding:10px; }
-    .place-item { padding:14px; border-bottom:1px solid #eee; cursor:pointer; }
-    .place-item:hover { background:#f8f9fa; }
+    .search-box button {
+      padding:0 16px; border-radius:20px; border:none;
+      background:#fee500; font-weight:bold; cursor:pointer;
+    }
+
+    .tab-container {
+      display:flex; border-bottom:2px solid #fee500;
+    }
+
+    .tab-button {
+      flex:1; padding:12px 0; border:none;
+      background:none; font-weight:bold; cursor:pointer; color:#666;
+    }
+
+    .tab-button.active {
+      background:#fee500; color:#000;
+    }
+
+    .result-container {
+      flex:1; overflow-y:auto; padding:10px;
+    }
+
+    .place-item {
+      padding:14px; border-bottom:1px solid #eee; cursor:pointer;
+    }
+
+    .place-item:hover {
+      background:#f8f9fa;
+    }
+
     .place-name { font-weight:bold; }
     .place-address { font-size:13px; color:#666; }
 
@@ -44,7 +71,7 @@
 <div class="container">
   <div class="sidebar">
     <div class="search-box">
-      <input id="keyword" placeholder="병원 이름 / 지역 검색" />
+      <input id="keyword" placeholder="지역 또는 병원 이름 검색" />
       <button onclick="searchHospitals()">검색</button>
     </div>
 
@@ -55,7 +82,9 @@
     </div>
 
     <div id="resultList" class="result-container">
-      <div style="padding:20px;text-align:center;color:#999;">검색어 또는 카테고리를 선택하세요</div>
+      <div style="padding:20px;text-align:center;color:#999;">
+        지역을 검색하거나 진료과를 선택하세요
+      </div>
     </div>
   </div>
 
@@ -66,10 +95,11 @@
 <script>
 let map, placesService;
 let markers = [];
-let currentPosition;
+let currentPosition = null;
 let currentCategory = '이비인후과';
-let isNearMode = false; // ⭐ 핵심 상태 변수
+let isNearMode = false;
 
+/* 지도 초기화 */
 kakao.maps.load(() => {
   map = new kakao.maps.Map(document.getElementById("map"), {
     center: new kakao.maps.LatLng(36.5, 127.8),
@@ -78,41 +108,64 @@ kakao.maps.load(() => {
 
   placesService = new kakao.maps.services.Places();
 
-  navigator.geolocation?.getCurrentPosition(pos => {
-    currentPosition = new kakao.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
-    new kakao.maps.CustomOverlay({
-      position: currentPosition,
-      content:'<div style="width:14px;height:14px;background:#007bff;border:3px solid #fff;border-radius:50%;"></div>',
-      map
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(pos => {
+      currentPosition = new kakao.maps.LatLng(
+        pos.coords.latitude,
+        pos.coords.longitude
+      );
+
+      new kakao.maps.CustomOverlay({
+        position: currentPosition,
+        content:
+          '<div style="width:14px;height:14px;background:#007bff;border:3px solid #fff;border-radius:50%;"></div>',
+        map
+      });
     });
-  });
+  }
 });
 
-/* 📍 내 위치 버튼 */
+/* 📍 내 위치 기준 검색 */
 function moveToMyLocation() {
   if (!currentPosition) return;
+
   isNearMode = true;
   map.panTo(currentPosition);
   map.setLevel(4);
   searchHospitals();
 }
 
-/* 탭 */
+/* 진료과 탭 */
 function switchTab(category, btn) {
   currentCategory = category;
-  document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+  isNearMode = false;
+
+  document.querySelectorAll('.tab-button').forEach(b =>
+    b.classList.remove('active')
+  );
   btn.classList.add('active');
+
   searchHospitals();
 }
 
-/* 검색 */
+/* 병원 검색 */
 function searchHospitals() {
   const keyword = document.getElementById("keyword").value.trim();
-  const query = keyword || currentCategory;
+
+  // ⭐ 지역 + 진료과 결합
+  const query = keyword
+    ? `${keyword} ${currentCategory}`
+    : currentCategory;
 
   const options = isNearMode && currentPosition
-    ? { location: currentPosition, radius: 2000 }
-    : {};
+    ? {
+        location: currentPosition,
+        radius: 2000,
+        category_group_code: "HP8"
+      }
+    : {
+        category_group_code: "HP8"
+      };
 
   placesService.keywordSearch(query, (data, status) => {
     if (status === kakao.maps.services.Status.OK) {
@@ -125,7 +178,7 @@ function searchHospitals() {
   }, options);
 }
 
-/* 결과 표시 */
+/* 검색 결과 표시 */
 function displayPlaces(places) {
   clearMarkers();
   const list = document.getElementById("resultList");
@@ -135,6 +188,7 @@ function displayPlaces(places) {
 
   places.forEach(place => {
     const pos = new kakao.maps.LatLng(place.y, place.x);
+
     const marker = new kakao.maps.Marker({ position: pos, map });
     markers.push(marker);
 
@@ -142,12 +196,16 @@ function displayPlaces(places) {
 
     const item = document.createElement("div");
     item.className = "place-item";
-    item.innerHTML = `<div class="place-name">${place.place_name}</div>
-                      <div class="place-address">${place.address_name}</div>`;
+    item.innerHTML = `
+      <div class="place-name">${place.place_name}</div>
+      <div class="place-address">${place.address_name}</div>
+    `;
+
     item.onclick = () => {
       map.panTo(pos);
       map.setLevel(4);
     };
+
     list.appendChild(item);
   });
 
@@ -156,14 +214,18 @@ function displayPlaces(places) {
   }
 }
 
-/* 마커 제거 */
+/* 마커 초기화 */
 function clearMarkers() {
   markers.forEach(m => m.setMap(null));
   markers = [];
 }
 
+/* 엔터로 검색 */
 document.getElementById("keyword").addEventListener("keydown", e => {
-  if (e.key === "Enter") searchHospitals();
+  if (e.key === "Enter") {
+    isNearMode = false;
+    searchHospitals();
+  }
 });
 </script>
 </body>
